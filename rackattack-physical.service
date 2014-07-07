@@ -1,0 +1,11 @@
+[Unit]
+Description=Rackattack Physical Hosts Provider
+After=network.target
+
+[Service]
+Type=simple
+Environment='PYTHONPATH=/usr/share/rackattack.physical/rackattack.physical.egg'
+ExecStart=/usr/bin/python -m rackattack.physical.main
+
+[Install]
+WantedBy=multi-user.target
