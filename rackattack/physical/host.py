@@ -38,3 +38,6 @@ class Host:
 
     def destroy(self):
         logging.info("Host %(index)d destroyed", dict(index=self._index))
+
+    def fulfillsRequirements(self, requirement):
+        return True

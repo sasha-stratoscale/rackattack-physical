@@ -17,8 +17,8 @@ from rackattack.common import hosts
 from rackattack.common import hoststatemachine
 from rackattack.common import globallock
 from rackattack.physical.alloc import freepool
-#from rackattack.physical.alloc import allocations
-#from rackattack.physical import ipcserver
+from rackattack.physical.alloc import allocations
+from rackattack.physical import ipcserver
 from rackattack.tcp import publish
 import yaml
 
@@ -63,8 +63,9 @@ with globallock.lock:
         hostsInstance.add(stateMachine)
         freePool.put(stateMachine)
         logging.info("Added host %(index)d", dict(index=hostInstance.index()))
-#allocationsInstance = allocations.Allocations(broadcaster=publishInstance, hosts=hostsInstance)
-#server = ipcserver.IPCServer(tcpPort=args.requestPort, allocations=allocationsInstance)
+allocationsInstance = allocations.Allocations(
+    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool)
+server = ipcserver.IPCServer(tcpPort=args.requestPort, allocations=allocationsInstance)
 logging.info("Physical RackAttack up and running")
 while True:
     time.sleep(1000 * 1000)
