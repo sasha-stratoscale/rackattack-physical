@@ -27,6 +27,9 @@ parser.add_argument("--requestPort", default=1014, type=int)
 parser.add_argument("--subscribePort", default=1015, type=int)
 parser.add_argument("--rackYAML")
 parser.add_argument("--serialLogsDirectory")
+parser.add_argument("--osmosisServerIP", required=True)
+parser.add_argument("--publicIP", required=True)
+parser.add_argument("--publicInterface", required=True)
 args = parser.parse_args()
 
 if args.rackYAML:
@@ -37,10 +40,12 @@ if args.serialLogsDirectory:
 with open(config.RACK_YAML) as f:
     rack = yaml.load(f.read())
 
+network.setUpStaticPortForwardingForSSH(args.publicInterface)
 timer.TimersThread()
 tftpbootInstance = tftpboot.TFTPBoot(
     netmask=network.NETMASK,
-    serverIP=network.GATEWAY_IP_ADDRESS,
+    inauguratorServerIP=network.GATEWAY_IP_ADDRESS,
+    osmosisServerIP=args.osmosisServerIP,
     rootPassword=config.ROOT_PASSWORD)
 dnsmasqInstance = dnsmasq.DNSMasq(
     tftpboot=tftpbootInstance,
@@ -51,7 +56,7 @@ dnsmasqInstance = dnsmasq.DNSMasq(
     gateway=network.GATEWAY_IP_ADDRESS,
     nameserver=network.GATEWAY_IP_ADDRESS)
 inaugurateInstance = inaugurate.Inaugurate(bindHostname=network.GATEWAY_IP_ADDRESS)
-publishInstance = publish.Publish(tcpPort=args.subscribePort)
+publishInstance = publish.Publish(tcpPort=args.subscribePort, localhostOnly=False)
 hostsInstance = hosts.Hosts()
 freePool = freepool.FreePool(hostsInstance)
 with globallock.lock:
@@ -64,8 +69,9 @@ with globallock.lock:
         freePool.put(stateMachine)
         logging.info("Added host %(index)d", dict(index=hostInstance.index()))
 allocationsInstance = allocations.Allocations(
-    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool)
-server = ipcserver.IPCServer(tcpPort=args.requestPort, allocations=allocationsInstance)
+    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool, osmosisServer=args.osmosisServerIP)
+server = ipcserver.IPCServer(
+    tcpPort=args.requestPort, publicIP=args.publicIP, allocations=allocationsInstance)
 logging.info("Physical RackAttack up and running")
 while True:
     time.sleep(1000 * 1000)

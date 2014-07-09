@@ -26,7 +26,7 @@ class Host:
         return self._secondaryMAC
 
     def ipAddress(self):
-        return network.ipAddressFromVMIndex(self._index)
+        return network.ipAddressFromHostIndex(self._index)
 
     def rootSSHCredentials(self):
         return dict(hostname=self.ipAddress(), username="root", password=config.ROOT_PASSWORD)

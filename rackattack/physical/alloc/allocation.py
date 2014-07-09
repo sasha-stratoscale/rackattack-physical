@@ -1,4 +1,5 @@
 from rackattack.common import globallock
+from rackattack.common import hoststatemachine
 from rackattack.common import timer
 import time
 import logging
@@ -8,27 +9,27 @@ class Allocation:
     _HEARTBEAT_TIMEOUT = 15
     _LIMBO_AFTER_DEATH_DURATION = 60
 
-    def __init__(self, index, requirements, allocationInfo, allocated, broadcaster):
+    def __init__(self, index, requirements, allocationInfo, allocated, broadcaster, freePool):
         self._index = index
         self._requirements = requirements
         self._allocationInfo = allocationInfo
+        self._broadcaster = broadcaster
+        self._freePool = freePool
         self._waiting = allocated
         for name, stateMachine in self._waiting.iteritems():
-            stateMachine.setDestroyCallback(self._stateMachineSelfDestructed)
-            stateMachine.assign(
-                stateChangeCallback=lambda x: self._stateMachineChangedState(name, stateMachine),
-                imageLabel=requirements[name]['imageLabel'],
-                imageHint=requirements[name]['imageHint'])
+            self._assign(name, stateMachine)
         self._inaugurated = dict()
-        self._broadcaster = broadcaster
         self._death = None
         self.heartbeat()
 
     def index(self):
         return self._index
 
+    def allocationInfo(self):
+        return self._allocationInfo
+
     def inaugurated(self):
-        assert not self.done()
+        assert self.done()
         return self._inaugurated
 
     def allocated(self):
@@ -81,12 +82,14 @@ class Allocation:
 
     def _stateMachineChangedState(self, name, stateMachine):
         if stateMachine.state() == hoststatemachine.STATE_INAUGURATION_DONE:
-            assert name in self._waiting
-            del self._waiting[name]
-            self._inaugurated[name] = stateMachine
             self._broadcaster.allocationProviderMessage(
                 allocationID=self._index,
                 message="host %s inaugurated successfully" % stateMachine.hostImplementation().ipAddress())
+            logging.info("Host %(index)s inaugurated successfully", dict(
+                index=stateMachine.hostImplementation().index()))
+            assert name in self._waiting
+            del self._waiting[name]
+            self._inaugurated[name] = stateMachine
             if self.done():
                 self._broadcaster.allocationChangedState(self._index)
 
@@ -101,3 +104,10 @@ class Allocation:
                 del self._inaugurated[k]
                 break
         self._die("Host %s unable to be inaugurated" % stateMachine.hostImplementation().index())
+
+    def _assign(self, name, stateMachine):
+        stateMachine.setDestroyCallback(self._stateMachineSelfDestructed)
+        stateMachine.assign(
+            stateChangeCallback=lambda x: self._stateMachineChangedState(name, stateMachine),
+            imageLabel=self._requirements[name]['imageLabel'],
+            imageHint=self._requirements[name]['imageHint'])

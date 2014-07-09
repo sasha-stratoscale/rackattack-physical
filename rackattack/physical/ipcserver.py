@@ -6,10 +6,12 @@ from rackattack.tcp import heartbeat
 from rackattack.tcp import suicide
 from rackattack import api
 from rackattack.common import globallock
+from rackattack.physical import network
 
 
 class IPCServer(threading.Thread):
-    def __init__(self, tcpPort, allocations):
+    def __init__(self, tcpPort, publicIP, allocations):
+        self._publicIP = publicIP
         self._allocations = allocations
         self._context = zmq.Context()
         self._socket = self._context.socket(zmq.REP)
@@ -64,7 +66,8 @@ class IPCServer(threading.Thread):
         allocation = self._allocations.byIndex(allocationID)
         for stateMachine in allocation.inaugurated().values():
             if stateMachine.hostImplementation().id() == nodeID:
-                return stateMachine.hostImplementation().rootSSHCredentials()
+                credentials = stateMachine.hostImplementation().rootSSHCredentials()
+                return network.translateSSHCredentials(nodeID, credentials, self._publicIP)
         raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
 
     def run(self):
