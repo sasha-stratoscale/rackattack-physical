@@ -19,7 +19,7 @@ class IPMI:
         output = self._powerCommand("status")
         status = output.split()[-1]
         if status not in ["off", "on"]:
-            raise Exception("Unknown status", dict(output = output, status = status))
+            raise Exception("Unknown status", dict(output=output, status=status))
         return status.split()[-1]
 
     def _powerCommand(self, command):

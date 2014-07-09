@@ -22,7 +22,7 @@ class IPCServer(threading.Thread):
         if version != api.VERSION:
             raise Exception(
                 "Rackattack API version on the client side is '%s', and '%s' on the provider" % (
-                version, api.VERSION))
+                    version, api.VERSION))
 
     def _cmd_allocate(self, requirements, allocationInfo):
         allocation = self._allocations.create(requirements, allocationInfo)

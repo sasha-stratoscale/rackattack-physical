@@ -7,6 +7,5 @@ def ipAddressFromVMIndex(index):
     return _IP_ADDRESS_FORMAT % (10 + index)
 
 
-
 FIRST_IP = ipAddressFromVMIndex(0)
 LAST_IP = ipAddressFromVMIndex(200)

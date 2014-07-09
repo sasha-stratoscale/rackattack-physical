@@ -1,20 +1,13 @@
 all: unittest build check_convention
 
 clean:
-	sudo rm -fr build images.fortests
+	sudo rm -fr build
 
 UNITTESTS=$(shell find rackattack -name 'test_*.py' | sed 's@/@.@g' | sed 's/\(.*\)\.py/\1/' | sort)
-COVERED_FILES=rackattack/common/hoststatemachine.py,rackattack/common/hosts.py
+COVERED_FILES=rackattack/physical/alloc/priority.py
 unittest:
 	UPSETO_JOIN_PYTHON_NAMESPACES=Yes PYTHONPATH=. coverage run -m unittest $(UNITTESTS)
-	coverage report --show-missing --rcfile=coverage.config --fail-under=91 --include=$(COVERED_FILES)
-
-WHITEBOXTESTS=$(shell find tests -name 'test?_*.py' | sed 's@/@.@g' | sed 's/\(.*\)\.py/\1/' | sort)
-whiteboxtest_nonstandard:
-	UPSETO_JOIN_PYTHON_NAMESPACES=Yes PYTHONPATH=. python -m unittest $(WHITEBOXTESTS)
-
-testone:
-	UPSETO_JOIN_PYTHON_NAMESPACES=Yes PYTHONPATH=. python tests/test$(NUMBER)_*.py
+	coverage report --show-missing --rcfile=coverage.config --fail-under=100 --include=$(COVERED_FILES)
 
 check_convention:
 	pep8 rackattack --max-line-length=109
