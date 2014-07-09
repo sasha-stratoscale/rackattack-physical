@@ -30,7 +30,7 @@ class Allocations:
         self._allocations.append(alloc)
         self._index += 1
         logging.info("Allocation granted: %(allocated)s", dict(
-            allocated={k: v.hostImplementation().index() for k,v in alloc.allocated().iteritems()}))
+            allocated={k: v.hostImplementation().index() for k, v in alloc.allocated().iteritems()}))
         return alloc
 
     def byIndex(self, index):
@@ -51,6 +51,7 @@ class Allocations:
 
     def _verifyLabelsExistsInOsmosis(self, labels):
         for label in labels:
-            exists = sh.run(["osmosis", "listlabels", label, "--objectStores", self._osmosisServer + ":1010"]).strip()
+            exists = sh.run([
+                "osmosis", "listlabels", label, "--objectStores", self._osmosisServer + ":1010"]).strip()
             if not exists:
                 raise Exception("Label '%s' does not exist on object store" % label)
