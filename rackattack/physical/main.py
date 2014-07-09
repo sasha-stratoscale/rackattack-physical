@@ -1,5 +1,5 @@
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 from rackattack.ssh import connection
 connection.discardParamikoLogs()
 connection.discardSSHDebugMessages()
