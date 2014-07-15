@@ -45,8 +45,9 @@ class Allocation:
     def free(self):
         self._die("freed")
 
-    def withdraw(self):
+    def withdraw(self, message):
         self._die("withdrawn")
+        self._broadcaster.allocationWithdraw(self._index, message)
 
     def heartbeat(self):
         if self.dead():

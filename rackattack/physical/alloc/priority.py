@@ -59,7 +59,7 @@ class Priority:
     def _withdrawExistingAllocations(self, allocated):
         toWithdraw = set([h[1].allocation for h in allocated if h[1].allocation is not None])
         for allocation in toWithdraw:
-            allocation.withdraw()
+            allocation.withdraw("An allocation with higher priority needs resources")
 
     def _takeOutOfFreePool(self, allocated):
         for name, host in allocated:
