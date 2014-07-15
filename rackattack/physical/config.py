@@ -1,2 +1,3 @@
 ROOT_PASSWORD = 'rackattack'
-RACK_YAML = "/etc/rackattack.physical.conf"
+CONFIGURATION_FILE = "/etc/rackattack.physical.conf"
+RACK_YAML = "/etc/rackattack.physical.rack.yaml"

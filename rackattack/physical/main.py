@@ -27,25 +27,27 @@ parser.add_argument("--requestPort", default=1014, type=int)
 parser.add_argument("--subscribePort", default=1015, type=int)
 parser.add_argument("--rackYAML")
 parser.add_argument("--serialLogsDirectory")
-parser.add_argument("--osmosisServerIP", required=True)
-parser.add_argument("--publicIP", required=True)
-parser.add_argument("--publicInterface", required=True)
+parser.add_argument("--configurationFile")
 args = parser.parse_args()
 
 if args.rackYAML:
     config.RACK_YAML = args.rackYAML
 if args.serialLogsDirectory:
     config.SERIAL_LOGS_DIRECTORY = args.serialLogsDirectory
+if args.configurationFile:
+    config.CONFIGURATION_FILE = args.configurationFile
 
 with open(config.RACK_YAML) as f:
     rack = yaml.load(f.read())
+with open(config.CONFIGURATION_FILE) as f:
+    conf = yaml.load(f.read())
 
-network.setUpStaticPortForwardingForSSH(args.publicInterface)
+network.setUpStaticPortForwardingForSSH(conf['PUBLIC_INTERFACE'])
 timer.TimersThread()
 tftpbootInstance = tftpboot.TFTPBoot(
     netmask=network.NETMASK,
     inauguratorServerIP=network.GATEWAY_IP_ADDRESS,
-    osmosisServerIP=args.osmosisServerIP,
+    osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
     rootPassword=config.ROOT_PASSWORD,
     withLocalObjectStore=True)
 dnsmasqInstance = dnsmasq.DNSMasq(
@@ -70,9 +72,9 @@ with globallock.lock:
         freePool.put(stateMachine)
         logging.info("Added host %(index)d", dict(index=hostInstance.index()))
 allocationsInstance = allocations.Allocations(
-    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool, osmosisServer=args.osmosisServerIP)
+    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool, osmosisServer=conf['OSMOSIS_SERVER_IP'])
 server = ipcserver.IPCServer(
-    tcpPort=args.requestPort, publicIP=args.publicIP, allocations=allocationsInstance)
+    tcpPort=args.requestPort, publicIP=conf['PUBLIC_IP'], allocations=allocationsInstance)
 logging.info("Physical RackAttack up and running")
 while True:
     time.sleep(1000 * 1000)
