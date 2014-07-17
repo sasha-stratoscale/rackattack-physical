@@ -95,7 +95,7 @@ class Allocation:
                 self._broadcaster.allocationChangedState(self._index)
 
     def _stateMachineSelfDestructed(self, stateMachine):
-        self._hosts.destroy(stateMachine)
+        self._host.destroy(stateMachine)
         for k, v in self._waiting.iteritems():
             if v is stateMachine:
                 del self._waiting[k]

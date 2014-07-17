@@ -72,7 +72,8 @@ with globallock.lock:
         freePool.put(stateMachine)
         logging.info("Added host %(index)d", dict(index=hostInstance.index()))
 allocationsInstance = allocations.Allocations(
-    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool, osmosisServer=conf['OSMOSIS_SERVER_IP'])
+    broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool,
+    osmosisServer=conf['OSMOSIS_SERVER_IP'])
 server = ipcserver.IPCServer(
     tcpPort=args.requestPort, publicIP=conf['PUBLIC_IP'], allocations=allocationsInstance)
 logging.info("Physical RackAttack up and running")

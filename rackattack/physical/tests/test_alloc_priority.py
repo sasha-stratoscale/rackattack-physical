@@ -41,7 +41,7 @@ class Allocation:
         self.freePool = freePool
         self.allocatedHosts = []
 
-    def withdraw(self):
+    def withdraw(self, ignoredMessage):
         self.freePool.pool += self.allocatedHosts
         self.allocatedHosts = None
 
