@@ -68,7 +68,8 @@ with globallock.lock:
         hostInstance = host.Host(index=hostsInstance.availableIndex(), **hostData)
         dnsmasqInstance.add(hostData['primaryMAC'], hostInstance.ipAddress())
         stateMachine = hoststatemachine.HostStateMachine(
-            hostImplementation=hostInstance, inaugurate=inaugurateInstance, tftpboot=tftpbootInstance)
+            hostImplementation=hostInstance, inaugurate=inaugurateInstance, tftpboot=tftpbootInstance,
+            freshVMJustStarted=False)
         hostsInstance.add(stateMachine)
         freePool.put(stateMachine)
         logging.info("Added host %(index)d", dict(index=hostInstance.index()))
