@@ -70,6 +70,15 @@ class IPCServer(threading.Thread):
                 return network.translateSSHCredentials(nodeID, credentials, self._publicIP)
         raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
 
+    def _cmd_node__fetchSerialLog(self, allocationID, nodeID):
+        allocation = self._allocations.byIndex(allocationID)
+        for stateMachine in allocation.inaugurated().values():
+            if stateMachine.hostImplementation().id() == nodeID:
+                ret = stateMachine.hostImplementation().fetchSerialLog()
+                logging.info("serial is: %s" % ret)
+                return ret
+        raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
+
     def run(self):
         try:
             while True:

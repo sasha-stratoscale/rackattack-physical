@@ -1,7 +1,9 @@
 from rackattack.physical import ipmi
 from rackattack.physical import network
 from rackattack.physical import config
+from rackattack.physical import serialoverlan
 import logging
+import os
 
 
 class Host:
@@ -12,6 +14,7 @@ class Host:
         self._primaryMAC = primaryMAC
         self._secondaryMAC = secondaryMAC
         self._ipmi = ipmi.IPMI(**ipmiLogin)
+        self._sol = serialoverlan.SerialOverLan(**ipmiLogin)
 
     def index(self):
         return self._index
@@ -41,3 +44,9 @@ class Host:
 
     def fulfillsRequirement(self, requirement):
         return True
+
+    def fetchSerialLog(self):
+        return self._sol.fetchSerialLog()
+
+    def truncateSerialLog(self):
+        self._sol.truncateSerialLog()

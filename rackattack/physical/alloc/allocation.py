@@ -17,6 +17,7 @@ class Allocation:
         self._freePool = freePool
         self._waiting = allocated
         for name, stateMachine in self._waiting.iteritems():
+            stateMachine.hostImplementation().truncateSerialLog()
             self._assign(name, stateMachine)
         self._inaugurated = dict()
         self._death = None
