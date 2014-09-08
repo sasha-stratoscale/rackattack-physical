@@ -10,8 +10,9 @@ from rackattack.physical import network
 
 
 class IPCServer(threading.Thread):
-    def __init__(self, tcpPort, publicIP, allocations):
+    def __init__(self, tcpPort, publicIP, osmosisServerIP, allocations):
         self._publicIP = publicIP
+        self._osmosisServerIP = osmosisServerIP
         self._allocations = allocations
         self._context = zmq.Context()
         self._socket = self._context.socket(zmq.REP)
@@ -44,8 +45,14 @@ class IPCServer(threading.Thread):
         for name, stateMachine in allocation.allocated().iteritems():
             host = stateMachine.hostImplementation()
             result[name] = dict(
-                id=host.id(), primaryMACAddress=host.primaryMACAddress(),
-                secondaryMACAddress=host.secondaryMACAddress(), ipAddress=host.ipAddress())
+                id=host.id(),
+                primaryMACAddress=host.primaryMACAddress(),
+                secondaryMACAddress=host.secondaryMACAddress(),
+                ipAddress=host.ipAddress(),
+                netmask=network.NETMASK,
+                inauguratorServerIP=network.GATEWAY_IP_ADDRESS,
+                gateway=network.GATEWAY_IP_ADDRESS,
+                osmosisServerIP=self._osmosisServerIP)
         return result
 
     def _cmd_allocation__free(self, id):

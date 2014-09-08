@@ -77,7 +77,10 @@ allocationsInstance = allocations.Allocations(
     broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool,
     osmosisServer=conf['OSMOSIS_SERVER_IP'])
 server = ipcserver.IPCServer(
-    tcpPort=args.requestPort, publicIP=conf['PUBLIC_IP'], allocations=allocationsInstance)
+    tcpPort=args.requestPort,
+    publicIP=conf['PUBLIC_IP'],
+    osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
+    allocations=allocationsInstance)
 logging.info("Physical RackAttack up and running")
 while True:
     time.sleep(1000 * 1000)
