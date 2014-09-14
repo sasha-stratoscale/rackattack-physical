@@ -27,7 +27,7 @@ class SerialOverLan(threading.Thread):
             try:
                 popen.wait()
             finally:
-                stdin.close()
+                os.close(stdin)
             logging.error("SOL connection to %(hostname)s is broken", dict(hostname=self._hostname))
         logging.error(
             "All retries to establish SOL connection to %(hostname)s failed, comitting suicide", dict(
