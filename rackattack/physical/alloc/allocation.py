@@ -16,11 +16,11 @@ class Allocation:
         self._broadcaster = broadcaster
         self._freePool = freePool
         self._waiting = allocated
+        self._inaugurated = dict()
+        self._death = None
         for name, stateMachine in self._waiting.iteritems():
             stateMachine.hostImplementation().truncateSerialLog()
             self._assign(name, stateMachine)
-        self._inaugurated = dict()
-        self._death = None
         self.heartbeat()
 
     def index(self):
@@ -35,7 +35,8 @@ class Allocation:
 
     def allocated(self):
         result = dict(self._waiting)
-        result.update(self._inaugurated)
+        if self._inaugurated is not None:
+            result.update(self._inaugurated)
         return result
 
     def done(self):
