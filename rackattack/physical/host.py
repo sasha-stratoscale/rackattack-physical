@@ -3,16 +3,16 @@ from rackattack.physical import network
 from rackattack.physical import config
 from rackattack.physical import serialoverlan
 import logging
-import os
 
 
 class Host:
-    def __init__(self, index, bootMAC, ipmiLogin, primaryMAC, secondaryMAC):
+    def __init__(self, index, id, ipmiLogin, primaryMAC, secondaryMAC, topology):
         self._index = index
-        self._bootMAC = bootMAC
+        self._id = id
         self._ipmiLogin = ipmiLogin
         self._primaryMAC = primaryMAC
         self._secondaryMAC = secondaryMAC
+        self._topology = topology
         self._ipmi = ipmi.IPMI(**ipmiLogin)
         self._sol = serialoverlan.SerialOverLan(**ipmiLogin)
 
@@ -20,7 +20,7 @@ class Host:
         return self._index
 
     def id(self):
-        return self._index
+        return self._id
 
     def primaryMACAddress(self):
         return self._primaryMAC
@@ -35,12 +35,12 @@ class Host:
         return dict(hostname=self.ipAddress(), username="root", password=config.ROOT_PASSWORD)
 
     def coldRestart(self):
-        logging.info("Cold booting host %(index)d", dict(index=self._index))
+        logging.info("Cold booting host %(id)s", dict(id=self._id))
         self._ipmi.off()
         self._ipmi.on()
 
     def destroy(self):
-        logging.info("Host %(index)d destroyed", dict(index=self._index))
+        logging.info("Host %(id)s destroyed", dict(id=self._id))
 
     def fulfillsRequirement(self, requirement):
         return True

@@ -88,8 +88,8 @@ class Allocation:
             self._broadcaster.allocationProviderMessage(
                 allocationID=self._index,
                 message="host %s inaugurated successfully" % stateMachine.hostImplementation().ipAddress())
-            logging.info("Host %(index)s inaugurated successfully", dict(
-                index=stateMachine.hostImplementation().index()))
+            logging.info("Host %(id)s inaugurated successfully", dict(
+                id=stateMachine.hostImplementation().id()))
             assert name in self._waiting
             del self._waiting[name]
             self._inaugurated[name] = stateMachine
@@ -106,7 +106,7 @@ class Allocation:
             if v is stateMachine:
                 del self._inaugurated[k]
                 break
-        self._die("Host %s unable to be inaugurated" % stateMachine.hostImplementation().index())
+        self._die("Host %s unable to be inaugurated" % stateMachine.hostImplementation().id())
 
     def _assign(self, name, stateMachine):
         stateMachine.setDestroyCallback(self._stateMachineSelfDestructed)

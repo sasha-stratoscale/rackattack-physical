@@ -72,7 +72,7 @@ with globallock.lock:
             freshVMJustStarted=False)
         hostsInstance.add(stateMachine)
         freePool.put(stateMachine)
-        logging.info("Added host %(index)d", dict(index=hostInstance.index()))
+        logging.info("Added host %(id)s - %(ip)s", dict(id=hostInstance.id(), ip=hostInstance.ipAddress()))
 allocationsInstance = allocations.Allocations(
     broadcaster=publishInstance, hosts=hostsInstance, freePool=freePool,
     osmosisServer=conf['OSMOSIS_SERVER_IP'])
@@ -80,7 +80,8 @@ server = ipcserver.IPCServer(
     tcpPort=args.requestPort,
     publicIP=conf['PUBLIC_IP'],
     osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
-    allocations=allocationsInstance)
+    allocations=allocationsInstance,
+    hosts=hostsInstance)
 logging.info("Physical RackAttack up and running")
 while True:
     time.sleep(1000 * 1000)

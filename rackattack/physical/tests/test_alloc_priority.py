@@ -46,7 +46,7 @@ class Allocation:
         self.allocatedHosts = None
 
     def allocated(self):
-        return self.allocatedHosts
+        return {str(x): x for x in self.allocatedHosts}
 
     def allocationInfo(self):
         return self._allocationInfo

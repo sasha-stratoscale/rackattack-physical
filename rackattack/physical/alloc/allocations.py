@@ -30,7 +30,7 @@ class Allocations:
         self._allocations.append(alloc)
         self._index += 1
         logging.info("Allocation granted: %(allocated)s", dict(
-            allocated={k: v.hostImplementation().index() for k, v in alloc.allocated().iteritems()}))
+            allocated={k: v.hostImplementation().id() for k, v in alloc.allocated().iteritems()}))
         return alloc
 
     def byIndex(self, index):

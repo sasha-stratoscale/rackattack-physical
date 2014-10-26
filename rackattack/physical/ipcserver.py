@@ -10,10 +10,11 @@ from rackattack.physical import network
 
 
 class IPCServer(threading.Thread):
-    def __init__(self, tcpPort, publicIP, osmosisServerIP, allocations):
+    def __init__(self, tcpPort, publicIP, osmosisServerIP, allocations, hosts):
         self._publicIP = publicIP
         self._osmosisServerIP = osmosisServerIP
         self._allocations = allocations
+        self._hosts = hosts
         self._context = zmq.Context()
         self._socket = self._context.socket(zmq.REP)
         self._socket.bind("tcp://*:%d" % tcpPort)
@@ -78,7 +79,8 @@ class IPCServer(threading.Thread):
         for stateMachine in allocation.inaugurated().values():
             if stateMachine.hostImplementation().id() == nodeID:
                 credentials = stateMachine.hostImplementation().rootSSHCredentials()
-                return network.translateSSHCredentials(nodeID, credentials, self._publicIP)
+                return network.translateSSHCredentials(
+                    stateMachine.hostImplementation().index(), credentials, self._publicIP)
         raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
 
     def _cmd_node__fetchSerialLog(self, allocationID, nodeID):
@@ -113,3 +115,28 @@ class IPCServer(threading.Thread):
             logging.exception('Handling')
             response = dict(exceptionString=str(e), exceptionType=e.__class__.__name__)
         self._socket.send_json(response)
+
+    def _cmd_admin__queryStatus(self):
+        allocations = [dict(
+            index=a.index(),
+            allocationInfo=a.allocationInfo(),
+            allocated={k: v.hostImplementation().index() for k, v in a.allocated().iteritems()},
+            done=a.dead() or a.done(),
+            dead=a.dead()
+            ) for a in self._allocations.all()]
+        STATE = {
+            1: "QUICK_RECLAIMATION_IN_PROGRESS",
+            2: "SLOW_RECLAIMATION_IN_PROGRESS",
+            3: "CHECKED_IN",
+            4: "INAUGURATION_LABEL_PROVIDED",
+            5: "INAUGURATION_DONE",
+            6: "DESTROYED"}
+        hosts = [dict(
+            index=s.hostImplementation().index(),
+            id=s.hostImplementation().id(),
+            primaryMACAddress=s.hostImplementation().primaryMACAddress(),
+            secondaryMACAddress=s.hostImplementation().secondaryMACAddress(),
+            ipAddress=s.hostImplementation().ipAddress(),
+            state=STATE[s.state()]
+            ) for s in self._hosts.all()]
+        return dict(allocations=allocations, hosts=hosts)

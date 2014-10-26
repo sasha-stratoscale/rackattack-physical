@@ -34,7 +34,7 @@ class Priority:
         for allocation in self._allocations:
             nice = self._absoluteNice(allocation.allocationInfo())
             if nice > myNice:
-                result += [Host(s, nice, allocation) for s in allocation.allocated()]
+                result += [Host(s, nice, allocation) for s in allocation.allocated().values()]
         return result
 
     def _allocate(self):
