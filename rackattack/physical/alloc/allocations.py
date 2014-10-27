@@ -24,9 +24,15 @@ class Allocations:
             requirements=requirements, allocationInfo=allocationInfo,
             freePool=self._freePool, allocations=self._allocations)
         allocated = priorityInstance.allocated()
-        alloc = allocation.Allocation(
-            index=self._index, requirements=requirements, allocationInfo=allocationInfo,
-            allocated=allocated, broadcaster=self._broadcaster, freePool=self._freePool)
+        try:
+            alloc = allocation.Allocation(
+                index=self._index, requirements=requirements, allocationInfo=allocationInfo,
+                allocated=allocated, broadcaster=self._broadcaster, freePool=self._freePool)
+        except:
+            logging.error("Creating allocation fails, freeing up all allocated hosts")
+            for allocated in allocated.values():
+                self._freePool.put(allocated)
+            raise
         self._allocations.append(alloc)
         self._index += 1
         logging.info("Allocation granted: %(allocated)s", dict(
