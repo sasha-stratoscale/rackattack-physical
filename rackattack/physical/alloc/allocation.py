@@ -68,6 +68,14 @@ class Allocation:
             return False
         return self._death['when'] < time.time() - self._LIMBO_AFTER_DEATH_DURATION
 
+    def fetchPostMortemPack(self):
+        contents = []
+        for name, stateMachine in self.allocated().iteritems():
+            contents.append("\n\n\n****************\n%s == %s\n******************" % (
+                stateMachine.hostImplementation().id(), name))
+            contents.append(stateMachine.hostImplementation().fetchSerialLog())
+        return "postMortemPack.txt", "\n".join(contents)
+
     def _heartbeatTimeout(self):
         self._die("heartbeat timeout")
 
@@ -87,7 +95,9 @@ class Allocation:
         if stateMachine.state() == hoststatemachine.STATE_INAUGURATION_DONE:
             self._broadcaster.allocationProviderMessage(
                 allocationID=self._index,
-                message="host %s inaugurated successfully" % stateMachine.hostImplementation().ipAddress())
+                message="host %s/%s inaugurated successfully" % (
+                    stateMachine.hostImplementation().id(),
+                    stateMachine.hostImplementation().ipAddress()))
             logging.info("Host %(id)s inaugurated successfully", dict(
                 id=stateMachine.hostImplementation().id()))
             assert name in self._waiting

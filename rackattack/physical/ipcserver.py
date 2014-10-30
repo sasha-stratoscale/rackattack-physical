@@ -56,6 +56,10 @@ class IPCServer(threading.Thread):
                 osmosisServerIP=self._osmosisServerIP)
         return result
 
+    def _cmd_allocation__fetchPostMortemPack(self, id):
+        allocation = self._allocations.byIndex(id)
+        return allocation.fetchPostMortemPack()
+
     def _cmd_allocation__free(self, id):
         allocation = self._allocations.byIndex(id)
         allocation.free()
