@@ -9,10 +9,11 @@ from rackattack.tcp import suicide
 
 
 class SerialOverLan(threading.Thread):
-    def __init__(self, hostname, username, password):
+    def __init__(self, hostname, username, password, hostID):
         self._hostname = hostname
         self._username = username
         self._password = password
+        self._hostID = hostID
         self._serialFile = self._getSerialFilePath()
         threading.Thread.__init__(self)
         self.daemon = True
@@ -61,4 +62,4 @@ class SerialOverLan(threading.Thread):
     def _getSerialFilePath(self):
         if not os.path.isdir(config.SERIAL_LOGS_DIRECTORY):
             os.makedirs(config.SERIAL_LOGS_DIRECTORY)
-        return os.path.join(config.SERIAL_LOGS_DIRECTORY, self._hostname + "-serial.txt")
+        return os.path.join(config.SERIAL_LOGS_DIRECTORY, self._hostID + "-serial.txt")

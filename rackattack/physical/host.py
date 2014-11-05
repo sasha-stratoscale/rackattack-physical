@@ -14,7 +14,7 @@ class Host:
         self._secondaryMAC = secondaryMAC
         self._topology = topology
         self._ipmi = ipmi.IPMI(**ipmiLogin)
-        self._sol = serialoverlan.SerialOverLan(**ipmiLogin)
+        self._sol = serialoverlan.SerialOverLan(hostID=id, **ipmiLogin)
 
     def index(self):
         return self._index

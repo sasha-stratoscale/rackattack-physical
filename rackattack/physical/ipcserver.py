@@ -78,23 +78,28 @@ class IPCServer(threading.Thread):
             allocation.heartbeat()
         return heartbeat.HEARTBEAT_OK
 
-    def _cmd_node__rootSSHCredentials(self, allocationID, nodeID):
+    def _findNode(self, allocationID, nodeID):
         allocation = self._allocations.byIndex(allocationID)
         for stateMachine in allocation.inaugurated().values():
             if stateMachine.hostImplementation().id() == nodeID:
-                credentials = stateMachine.hostImplementation().rootSSHCredentials()
-                return network.translateSSHCredentials(
-                    stateMachine.hostImplementation().index(), credentials, self._publicIP)
+                return stateMachine
         raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
 
+    def _cmd_node__rootSSHCredentials(self, allocationID, nodeID):
+        stateMachine = self._findNode(allocationID, nodeID)
+        credentials = stateMachine.hostImplementation().rootSSHCredentials()
+        return network.translateSSHCredentials(
+            stateMachine.hostImplementation().index(), credentials, self._publicIP)
+
     def _cmd_node__fetchSerialLog(self, allocationID, nodeID):
-        allocation = self._allocations.byIndex(allocationID)
-        for stateMachine in allocation.inaugurated().values():
-            if stateMachine.hostImplementation().id() == nodeID:
-                ret = stateMachine.hostImplementation().fetchSerialLog()
-                logging.info("serial is: %s" % ret)
-                return ret
-        raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
+        stateMachine = self._findNode(allocationID, nodeID)
+        logging.info("Fetching serial log of %(node)s by allocator request", dict(node=nodeID))
+        return stateMachine.hostImplementation().fetchSerialLog()
+
+    def _cmd_node__coldRestart(self, allocationID, nodeID):
+        stateMachine = self._findNode(allocationID, nodeID)
+        logging.info("Cold restarting node %(node)s by allocator request", dict(node=nodeID))
+        stateMachine.hostImplementation().coldRestart()
 
     def run(self):
         try:
