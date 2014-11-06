@@ -1,7 +1,6 @@
 import logging
 import pty
 import os
-import time
 import subprocess
 import threading
 from rackattack.physical import config
@@ -14,26 +13,19 @@ class SerialOverLan(threading.Thread):
         self._username = username
         self._password = password
         self._hostID = hostID
+        self._stop = False
+        self._popen = None
         self._serialFile = self._getSerialFilePath()
         threading.Thread.__init__(self)
         self.daemon = True
         self.start()
 
-    def run(self):
-        RETRIES = 5
-        for i in xrange(RETRIES):
-            logging.info("trying to establish SOL connection to %(hostname)s", dict(
-                hostname=self._hostname))
-            stdin, popen = self._popenSOL()
-            try:
-                popen.wait()
-            finally:
-                os.close(stdin)
-            logging.error("SOL connection to %(hostname)s is broken", dict(hostname=self._hostname))
-        logging.error(
-            "All retries to establish SOL connection to %(hostname)s failed, comitting suicide", dict(
-                hostname=self._hostname))
-        suicide.killSelf()
+    def stop(self):
+        logging.info("Stopping SOL for %(hostname)s", dict(hostname=self._hostname))
+        self._stop = True
+        popen = self._popen
+        if popen is not None:
+            popen.terminate()
 
     def fetchSerialLog(self):
         with open(self._serialFile) as f:
@@ -41,6 +33,26 @@ class SerialOverLan(threading.Thread):
 
     def truncateSerialLog(self):
         open(self._serialFile, 'w').close()
+
+    def run(self):
+        RETRIES = 5
+        for i in xrange(RETRIES):
+            logging.info("trying to establish SOL connection to %(hostname)s", dict(
+                hostname=self._hostname))
+            stdin, self._popen = self._popenSOL()
+            try:
+                self._popen.wait()
+            finally:
+                os.close(stdin)
+            self._popen = None
+            if self._stop:
+                logging.info('SOL thread for %(hostname)s exists', dict(hostname=self._hostname))
+                return
+            logging.error("SOL connection to %(hostname)s is broken", dict(hostname=self._hostname))
+        logging.error(
+            "All retries to establish SOL connection to %(hostname)s failed, comitting suicide", dict(
+                hostname=self._hostname))
+        suicide.killSelf()
 
     def _popenSOL(self):
         self.truncateSerialLog()

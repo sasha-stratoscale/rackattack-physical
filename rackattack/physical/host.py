@@ -13,8 +13,9 @@ class Host:
         self._primaryMAC = primaryMAC
         self._secondaryMAC = secondaryMAC
         self._topology = topology
+        self._ipmiLogin = ipmiLogin
         self._ipmi = ipmi.IPMI(**ipmiLogin)
-        self._sol = serialoverlan.SerialOverLan(hostID=id, **ipmiLogin)
+        self._sol = None
 
     def index(self):
         return self._index
@@ -38,6 +39,15 @@ class Host:
         logging.info("Cold booting host %(id)s", dict(id=self._id))
         self._ipmi.off()
         self._ipmi.on()
+        if self._sol is None:
+            self._sol = serialoverlan.SerialOverLan(hostID=self._id, **self._ipmiLogin)
+
+    def turnOff(self):
+        logging.info("Turning off host %(id)s", dict(id=self._id))
+        self._ipmi.off()
+        if self._sol is not None:
+            self._sol.stop()
+            self._sol = None
 
     def destroy(self):
         logging.info("Host %(id)s destroyed", dict(id=self._id))
@@ -46,7 +56,11 @@ class Host:
         return True
 
     def fetchSerialLog(self):
+        if self._sol is None:
+            return "SOL stopped"
         return self._sol.fetchSerialLog()
 
     def truncateSerialLog(self):
+        if self._sol is None:
+            return
         self._sol.truncateSerialLog()
