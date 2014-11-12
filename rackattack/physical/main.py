@@ -46,6 +46,7 @@ tftpbootInstance = tftpboot.TFTPBoot(
     osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
     rootPassword=config.ROOT_PASSWORD,
     withLocalObjectStore=True)
+dnsmasq.DNSMasq.eraseLeasesFile()
 dnsmasq.DNSMasq.killAllPrevious()
 dnsmasqInstance = dnsmasq.DNSMasq(
     tftpboot=tftpbootInstance,
