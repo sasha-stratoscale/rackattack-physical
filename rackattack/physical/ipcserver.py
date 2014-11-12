@@ -123,7 +123,12 @@ class IPCServer(threading.Thread):
         except Exception, e:
             logging.exception('Handling')
             response = dict(exceptionString=str(e), exceptionType=e.__class__.__name__)
-        self._socket.send_json(response)
+        try:
+            json = simplejson.dumps(response)
+        except Exception, e:
+            logging.exception('Encoding cmd: %(cmd)s', dict(cmd=incoming['cmd']))
+            json = simplejson.dumps(dict(exceptionString=str(e), exceptionType=e.__class__.__name__))
+        self._socket.send(json)
 
     def _cmd_admin__queryStatus(self):
         allocations = [dict(
