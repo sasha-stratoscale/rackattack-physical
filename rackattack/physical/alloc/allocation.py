@@ -45,6 +45,8 @@ class Allocation:
         return done
 
     def free(self):
+        if self.dead():
+            raise Exception("Cant free allocation: its already dead: '%s'" % self._death['reason'])
         self._die("freed")
 
     def withdraw(self, message):
