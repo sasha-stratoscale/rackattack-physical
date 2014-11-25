@@ -10,6 +10,7 @@ from rackattack.physical import network
 from rackattack.physical import dynamicconfig
 import rackattack.virtual.handlekill
 from rackattack.common import dnsmasq
+from rackattack.common import globallock
 from rackattack.common import tftpboot
 from rackattack.common import inaugurate
 from rackattack.common import timer
@@ -18,13 +19,18 @@ from rackattack.physical.alloc import freepool
 from rackattack.physical.alloc import allocations
 from rackattack.physical import ipcserver
 from rackattack.tcp import publish
+from twisted.internet import reactor
+from twisted.web import server
+from rackattack.common import httprootresource
 import yaml
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--requestPort", default=1014, type=int)
 parser.add_argument("--subscribePort", default=1015, type=int)
+parser.add_argument("--httpPort", default=1016, type=int)
 parser.add_argument("--rackYAML")
 parser.add_argument("--serialLogsDirectory")
+parser.add_argument("--managedPostMortemPacksDirectory")
 parser.add_argument("--configurationFile")
 args = parser.parse_args()
 
@@ -34,6 +40,8 @@ if args.serialLogsDirectory:
     config.SERIAL_LOGS_DIRECTORY = args.serialLogsDirectory
 if args.configurationFile:
     config.CONFIGURATION_FILE = args.configurationFile
+if args.managedPostMortemPacksDirectory:
+    config.MANAGED_POST_MORTEM_PACKS_DIRECTORY = args.managedPostMortemPacksDirectory
 
 with open(config.CONFIGURATION_FILE) as f:
     conf = yaml.load(f.read())
@@ -70,12 +78,27 @@ dynamicConfig = dynamicconfig.DynamicConfig(
     tftpboot=tftpbootInstance,
     freePool=freePool,
     allocations=allocationsInstance)
-server = ipcserver.IPCServer(
+ipcServer = ipcserver.IPCServer(
     tcpPort=args.requestPort,
     publicIP=conf['PUBLIC_IP'],
     osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
     allocations=allocationsInstance,
     hosts=hostsInstance)
+
+
+def serialLogFilename(vmID):
+    with globallock.lock:
+        return hostsInstance.byID(vmID).hostImplementation().serialLogFilename()
+
+
+def createPostMortemPackForAllocationID(allocationID):
+    with globallock.lock:
+        return allocationsInstance.byIndex(int(allocationID)).createPostMortemPack()
+
+
+root = httprootresource.HTTPRootResource(
+    serialLogFilename, createPostMortemPackForAllocationID,
+    config.MANAGED_POST_MORTEM_PACKS_DIRECTORY)
+reactor.listenTCP(args.httpPort, server.Site(root))
 logging.info("Physical RackAttack up and running")
-while True:
-    time.sleep(1000 * 1000)
+reactor.run()

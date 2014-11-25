@@ -56,10 +56,6 @@ class IPCServer(threading.Thread):
                 osmosisServerIP=self._osmosisServerIP)
         return result
 
-    def _cmd_allocation__fetchPostMortemPack(self, id):
-        allocation = self._allocations.byIndex(id)
-        return allocation.fetchPostMortemPack()
-
     def _cmd_allocation__free(self, id):
         allocation = self._allocations.byIndex(id)
         allocation.free()
@@ -90,11 +86,6 @@ class IPCServer(threading.Thread):
         credentials = stateMachine.hostImplementation().rootSSHCredentials()
         return network.translateSSHCredentials(
             stateMachine.hostImplementation().index(), credentials, self._publicIP)
-
-    def _cmd_node__fetchSerialLog(self, allocationID, nodeID):
-        stateMachine = self._findNode(allocationID, nodeID)
-        logging.info("Fetching serial log of %(node)s by allocator request", dict(node=nodeID))
-        return stateMachine.hostImplementation().fetchSerialLog()
 
     def _cmd_node__coldRestart(self, allocationID, nodeID):
         stateMachine = self._findNode(allocationID, nodeID)

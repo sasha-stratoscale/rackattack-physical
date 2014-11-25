@@ -3,6 +3,7 @@ from rackattack.common import hoststatemachine
 from rackattack.common import timer
 import time
 import logging
+import tempfile
 
 
 class Allocation:
@@ -70,13 +71,17 @@ class Allocation:
             return False
         return self._death['when'] < time.time() - self._LIMBO_AFTER_DEATH_DURATION
 
-    def fetchPostMortemPack(self):
+    def createPostMortemPack(self):
         contents = []
         for name, stateMachine in self.allocated().iteritems():
             contents.append("\n\n\n****************\n%s == %s\n******************" % (
                 stateMachine.hostImplementation().id(), name))
-            contents.append(stateMachine.hostImplementation().fetchSerialLog())
-        return "postMortemPack.txt", "\n".join(contents)
+            with open(stateMachine.hostImplementation().serialLogFilename(), "rb") as f:
+                contents.append(f.read())
+        filename = tempfile.mktemp()
+        with open(filename, "wb") as f:
+            f.write("\n".join(contents))
+        return filename
 
     def _heartbeatTimeout(self):
         self._die("heartbeat timeout")

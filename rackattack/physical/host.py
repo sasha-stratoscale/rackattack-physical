@@ -55,10 +55,10 @@ class Host:
     def fulfillsRequirement(self, requirement):
         return True
 
-    def fetchSerialLog(self):
+    def serialLogFilename(self):
         if self._sol is None:
-            return "SOL stopped"
-        return self._sol.fetchSerialLog()
+            raise Exception("SOL stopped")
+        return self._sol.serialLogFilename()
 
     def truncateSerialLog(self):
         if self._sol is None:

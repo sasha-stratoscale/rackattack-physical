@@ -27,9 +27,8 @@ class SerialOverLan(threading.Thread):
         if popen is not None:
             popen.terminate()
 
-    def fetchSerialLog(self):
-        with open(self._serialFile) as f:
-            return f.read()
+    def serialLogFilename(self):
+        return self._serialFile
 
     def truncateSerialLog(self):
         open(self._serialFile, 'w').close()
