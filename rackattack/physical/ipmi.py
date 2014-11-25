@@ -1,26 +1,29 @@
 import subprocess
 import time
 import logging
+import multiprocessing.pool
 
 
 class IPMI:
+    _CONCURRENCY = 4
+    _pool = None
+
     def __init__(self, hostname, username, password):
         self._hostname = hostname
         self._username = username
         self._password = password
+        if IPMI._pool is None:
+            IPMI._pool = multiprocessing.pool.ThreadPool(self._CONCURRENCY)
 
     def off(self):
+        IPMI._pool.apply_async(self._powerCommand, args=("off",))
+
+    def powerCycle(self):
+        IPMI._pool.apply_async(self._powerCycle)
+
+    def _powerCycle(self):
         self._powerCommand("off")
-
-    def on(self):
         self._powerCommand("on")
-
-    def status(self):
-        output = self._powerCommand("status")
-        status = output.split()[-1]
-        if status not in ["off", "on"]:
-            raise Exception("Unknown status", dict(output=output, status=status))
-        return status.split()[-1]
 
     def _powerCommand(self, command):
         NUMBER_OF_RETRIES = 10

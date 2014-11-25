@@ -37,8 +37,7 @@ class Host:
 
     def coldRestart(self):
         logging.info("Cold booting host %(id)s", dict(id=self._id))
-        self._ipmi.off()
-        self._ipmi.on()
+        self._ipmi.powerCycle()
         if self._sol is None:
             self._sol = serialoverlan.SerialOverLan(hostID=self._id, **self._ipmiLogin)
 

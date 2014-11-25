@@ -3,6 +3,7 @@ import pty
 import os
 import subprocess
 import threading
+import time
 from rackattack.physical import config
 from rackattack.tcp import suicide
 
@@ -34,7 +35,8 @@ class SerialOverLan(threading.Thread):
         open(self._serialFile, 'w').close()
 
     def run(self):
-        RETRIES = 5
+        RETRIES = 10
+        INTERVAL = 10
         for i in xrange(RETRIES):
             logging.info("trying to establish SOL connection to %(hostname)s", dict(
                 hostname=self._hostname))
@@ -48,6 +50,7 @@ class SerialOverLan(threading.Thread):
                 logging.info('SOL thread for %(hostname)s exists', dict(hostname=self._hostname))
                 return
             logging.error("SOL connection to %(hostname)s is broken", dict(hostname=self._hostname))
+            time.sleep(INTERVAL)
         logging.error(
             "All retries to establish SOL connection to %(hostname)s failed, comitting suicide", dict(
                 hostname=self._hostname))
