@@ -114,7 +114,6 @@ class Allocation:
                 self._broadcaster.allocationChangedState(self._index)
 
     def _stateMachineSelfDestructed(self, stateMachine):
-        self._host.destroy(stateMachine)
         for k, v in self._waiting.iteritems():
             if v is stateMachine:
                 del self._waiting[k]
@@ -123,7 +122,7 @@ class Allocation:
             if v is stateMachine:
                 del self._inaugurated[k]
                 break
-        self._die("Host %s unable to be inaugurated" % stateMachine.hostImplementation().id())
+        self._die("Unable to inaugurate Host %s" % stateMachine.hostImplementation().id())
 
     def _assign(self, name, stateMachine):
         stateMachine.setDestroyCallback(self._stateMachineSelfDestructed)
