@@ -4,6 +4,8 @@ import os
 import subprocess
 import threading
 import time
+import signal
+import errno
 from rackattack.physical import config
 from rackattack.tcp import suicide
 
@@ -32,7 +34,15 @@ class SerialOverLan(threading.Thread):
         return self._serialFile
 
     def truncateSerialLog(self):
-        open(self._serialFile, 'w').close()
+        popen = self._popen
+        if popen is None:
+            return
+        try:
+            popen.send_signal(signal.SIGHUP)
+        except OSError as e:
+            if e.errno == errno.ESRCH:
+                return
+            raise
 
     def run(self):
         RETRIES = 10
@@ -63,8 +73,11 @@ class SerialOverLan(threading.Thread):
         try:
             with open(self._serialFile, "w") as outputFile:
                 return master, subprocess.Popen(
-                    self._getSolCommand("activate"), stdin=slave,
+                    ['python', '-c', self._TRUNCER] + list(self._getSolCommand("activate")), stdin=slave,
                     stderr=subprocess.STDOUT, stdout=outputFile, close_fds=True)
+        except:
+            os.close(master)
+            raise
         finally:
             os.close(slave)
 
@@ -77,3 +90,37 @@ class SerialOverLan(threading.Thread):
         if not os.path.isdir(config.SERIAL_LOGS_DIRECTORY):
             os.makedirs(config.SERIAL_LOGS_DIRECTORY)
         return os.path.join(config.SERIAL_LOGS_DIRECTORY, self._hostID + "-serial.txt")
+
+    _TRUNCER = \
+        "import subprocess\n" \
+        "import signal\n" \
+        "import sys\n" \
+        "import os\n" \
+        "import pty\n" \
+        "import errno\n" \
+        "\n" \
+        "\n" \
+        "def setTruncateRequested(*args):\n" \
+        "    global truncateRequested\n" \
+        "    truncateRequested = True\n" \
+        "\n" \
+        "\n" \
+        "truncateRequested = False\n" \
+        "signal.signal(signal.SIGHUP, setTruncateRequested)\n" \
+        "master, slave = pty.openpty()\n" \
+        "popen = subprocess.Popen(sys.argv[1:], stdout=slave, stderr=subprocess.STDOUT)\n" \
+        "os.close(slave)\n" \
+        "while True:\n" \
+        "    try:\n" \
+        "        data = os.read(master, 4096)\n" \
+        "    except OSError as e:\n" \
+        "        if e.errno == errno.EINTR:\n" \
+        "            continue\n" \
+        "        raise\n" \
+        "    if len(data) == 0:\n" \
+        "        sys.exit(popen.wait())\n" \
+        "    if truncateRequested:\n" \
+        "        truncateRequested = False\n" \
+        "        os.ftruncate(sys.stdout.fileno(), 0)\n" \
+        "        os.lseek(sys.stdout.fileno(), 0, os.SEEK_SET)\n" \
+        "    os.write(sys.stdout.fileno(), data)\n"
