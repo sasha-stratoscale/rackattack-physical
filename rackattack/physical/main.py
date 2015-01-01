@@ -1,5 +1,5 @@
 import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+from rackattack.physical import logconfig
 from rackattack.ssh import connection
 connection.discardParamikoLogs()
 connection.discardSSHDebugMessages()
@@ -87,12 +87,12 @@ ipcServer = ipcserver.IPCServer(
 
 
 def serialLogFilename(vmID):
-    with globallock.lock:
+    with globallock.lock():
         return hostsInstance.byID(vmID).hostImplementation().serialLogFilename()
 
 
 def createPostMortemPackForAllocationID(allocationID):
-    with globallock.lock:
+    with globallock.lock():
         return allocationsInstance.byIndex(int(allocationID)).createPostMortemPack()
 
 

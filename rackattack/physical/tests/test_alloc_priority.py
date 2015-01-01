@@ -54,14 +54,14 @@ class Allocation:
 
 class Test(unittest.TestCase):
     def setUp(self):
-        globallock.lock.acquire()
+        globallock._lock.acquire()
         self.freePool = FreePool()
         self.allocationInfo = api.AllocationInfo(user='test', purpose='user', nice=0.5).__dict__
         self.allocations = []
         self.requirements = {}
 
     def tearDown(self):
-        globallock.lock.release()
+        globallock._lock.release()
 
     def construct(self):
         self.tested = priority.Priority(

@@ -6,6 +6,7 @@ from rackattack.tcp import heartbeat
 from rackattack.tcp import suicide
 from rackattack import api
 from rackattack.common import globallock
+from rackattack.tcp import debug
 from rackattack.physical import network
 
 
@@ -109,8 +110,9 @@ class IPCServer(threading.Thread):
         try:
             incoming = simplejson.loads(message)
             handler = getattr(self, "_cmd_" + incoming['cmd'])
-            with globallock.lock:
-                response = handler(** incoming['arguments'])
+            with globallock.lock():
+                with debug.logNetwork("Handing '%s'" % incoming['cmd']):
+                    response = handler(** incoming['arguments'])
         except Exception, e:
             logging.exception('Handling')
             response = dict(exceptionString=str(e), exceptionType=e.__class__.__name__)

@@ -29,7 +29,7 @@ class DynamicConfig:
     def _reload(self):
         logging.info("Reloading configuration")
         rack = self._loadRackYAML()
-        with globallock.lock:
+        with globallock.lock():
             for hostData in rack['HOSTS']:
                 if hostData['id'] in self._offlineHosts or hostData['id'] in self._onlineHosts:
                     if hostData['id'] in self._onlineHosts and hostData.get('offline', False):
