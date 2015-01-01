@@ -50,7 +50,8 @@ network.setUpStaticPortForwardingForSSH(conf['PUBLIC_INTERFACE'])
 timer.TimersThread()
 tftpbootInstance = tftpboot.TFTPBoot(
     netmask=network.NETMASK,
-    inauguratorServerIP=network.GATEWAY_IP_ADDRESS,
+    inauguratorServerIP=network.BOOTSERVER_IP_ADDRESS,
+    inauguratorGatewayIP=network.GATEWAY_IP_ADDRESS,
     osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
     rootPassword=config.ROOT_PASSWORD,
     withLocalObjectStore=True)
@@ -58,13 +59,13 @@ dnsmasq.DNSMasq.eraseLeasesFile()
 dnsmasq.DNSMasq.killAllPrevious()
 dnsmasqInstance = dnsmasq.DNSMasq(
     tftpboot=tftpbootInstance,
-    serverIP=network.GATEWAY_IP_ADDRESS,
+    serverIP=network.BOOTSERVER_IP_ADDRESS,
     netmask=network.NETMASK,
     firstIP=network.FIRST_IP,
     lastIP=network.LAST_IP,
     gateway=network.GATEWAY_IP_ADDRESS,
-    nameserver=network.GATEWAY_IP_ADDRESS)
-inaugurateInstance = inaugurate.Inaugurate(bindHostname=network.GATEWAY_IP_ADDRESS)
+    nameserver=network.BOOTSERVER_IP_ADDRESS)
+inaugurateInstance = inaugurate.Inaugurate(bindHostname=network.BOOTSERVER_IP_ADDRESS)
 publishInstance = publish.Publish(tcpPort=args.subscribePort, localhostOnly=False)
 hostsInstance = hosts.Hosts()
 freePool = freepool.FreePool(hostsInstance)
@@ -80,7 +81,7 @@ dynamicConfig = dynamicconfig.DynamicConfig(
     allocations=allocationsInstance)
 ipcServer = ipcserver.IPCServer(
     tcpPort=args.requestPort,
-    publicIP=conf['PUBLIC_IP'],
+    publicNATIP=conf['PUBLIC_NAT_IP'],
     osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
     allocations=allocationsInstance,
     hosts=hostsInstance)

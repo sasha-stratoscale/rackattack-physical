@@ -1,0 +1,7 @@
+#ip of the osmosis server passed to inaugurator - should be the inside ip address of osmosis object store if possible
+OSMOSIS_SERVER_IP: 10.0.0.26
+# the public nat that connects the rack to your network. it is the same ip of the rackattack server if they are the same server, but they might not be
+PUBLIC_NAT_IP: 10.0.0.101
+# the iptables rules will find the name of the public nic if you specify its mac here. not very useful if the nat is not the same server.
+# you can also have the nic name here, but it's less reliable
+PUBLIC_INTERFACE: "00:1e:67:44:13:a1"

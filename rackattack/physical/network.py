@@ -1,9 +1,11 @@
 from rackattack.virtual import sh
 import subprocess
 import os
+import logging
 
 _IP_ADDRESS_FORMAT = "192.168.1.%d"
-GATEWAY_IP_ADDRESS = _IP_ADDRESS_FORMAT % 1
+GATEWAY_IP_ADDRESS = _IP_ADDRESS_FORMAT % 2
+BOOTSERVER_IP_ADDRESS = _IP_ADDRESS_FORMAT % 1
 NETMASK = '255.255.255.0'
 LAST_INDEX = 200
 
@@ -21,6 +23,10 @@ def sshPortFromHostIndex(index):
 
 
 def setUpStaticPortForwardingForSSH(publicInterface):
+####
+    logging.warning("Skipping firewall setup")
+    return
+####
     deviceName = _findPublicInterface(publicInterface)
     for index in xrange(LAST_INDEX + 1):
         subprocess.call([
@@ -39,9 +45,9 @@ def setUpStaticPortForwardingForSSH(publicInterface):
         "iptables", "-t", "nat", "-A", "POSTROUTING", "-o", deviceName, "-j", 'MASQUERADE'])
 
 
-def translateSSHCredentials(index, credentials, publicIP):
+def translateSSHCredentials(index, credentials, publicNATIP):
     assert ipAddressFromHostIndex(index) == credentials['hostname']
-    return dict(credentials, hostname=publicIP, port=sshPortFromHostIndex(index))
+    return dict(credentials, hostname=publicNATIP, port=sshPortFromHostIndex(index))
 
 
 def _findPublicInterface(publicInterface):

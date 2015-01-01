@@ -11,8 +11,8 @@ from rackattack.physical import network
 
 
 class IPCServer(threading.Thread):
-    def __init__(self, tcpPort, publicIP, osmosisServerIP, allocations, hosts):
-        self._publicIP = publicIP
+    def __init__(self, tcpPort, publicNATIP, osmosisServerIP, allocations, hosts):
+        self._publicNATIP = publicNATIP
         self._osmosisServerIP = osmosisServerIP
         self._allocations = allocations
         self._hosts = hosts
@@ -86,7 +86,7 @@ class IPCServer(threading.Thread):
         stateMachine = self._findNode(allocationID, nodeID)
         credentials = stateMachine.hostImplementation().rootSSHCredentials()
         return network.translateSSHCredentials(
-            stateMachine.hostImplementation().index(), credentials, self._publicIP)
+            stateMachine.hostImplementation().index(), credentials, self._publicNATIP)
 
     def _cmd_node__coldRestart(self, allocationID, nodeID):
         stateMachine = self._findNode(allocationID, nodeID)
