@@ -19,6 +19,7 @@ from rackattack.physical.alloc import freepool
 from rackattack.physical.alloc import allocations
 from rackattack.physical import ipcserver
 from rackattack.tcp import publish
+from rackattack.tcp import transportserver
 from twisted.internet import reactor
 from twisted.web import server
 from rackattack.common import httprootresource
@@ -46,6 +47,7 @@ if args.managedPostMortemPacksDirectory:
 with open(config.CONFIGURATION_FILE) as f:
     conf = yaml.load(f.read())
 
+network.setGatewayIP(conf['GATEWAY_IP'])
 network.setUpStaticPortForwardingForSSH(conf['PUBLIC_INTERFACE'])
 timer.TimersThread()
 tftpbootInstance = tftpboot.TFTPBoot(
@@ -66,7 +68,8 @@ dnsmasqInstance = dnsmasq.DNSMasq(
     gateway=network.GATEWAY_IP_ADDRESS,
     nameserver=network.BOOTSERVER_IP_ADDRESS)
 inaugurateInstance = inaugurate.Inaugurate(bindHostname=network.BOOTSERVER_IP_ADDRESS)
-publishInstance = publish.Publish(tcpPort=args.subscribePort, localhostOnly=False)
+publishFactory = publish.PublishFactory()
+publishInstance = publish.Publish(publishFactory)
 hostsInstance = hosts.Hosts()
 freePool = freepool.FreePool(hostsInstance)
 allocationsInstance = allocations.Allocations(
@@ -80,7 +83,6 @@ dynamicConfig = dynamicconfig.DynamicConfig(
     freePool=freePool,
     allocations=allocationsInstance)
 ipcServer = ipcserver.IPCServer(
-    tcpPort=args.requestPort,
     publicNATIP=conf['PUBLIC_NAT_IP'],
     osmosisServerIP=conf['OSMOSIS_SERVER_IP'],
     allocations=allocationsInstance,
@@ -101,5 +103,7 @@ root = httprootresource.HTTPRootResource(
     serialLogFilename, createPostMortemPackForAllocationID,
     config.MANAGED_POST_MORTEM_PACKS_DIRECTORY)
 reactor.listenTCP(args.httpPort, server.Site(root))
+reactor.listenTCP(args.requestPort, transportserver.TransportFactory(ipcServer.handle))
+reactor.listenTCP(args.subscribePort, publishFactory)
 logging.info("Physical RackAttack up and running")
 reactor.run()

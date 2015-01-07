@@ -1,13 +1,17 @@
 from rackattack.virtual import sh
 import subprocess
 import os
-import logging
 
 _IP_ADDRESS_FORMAT = "192.168.1.%d"
-GATEWAY_IP_ADDRESS = _IP_ADDRESS_FORMAT % 2
+GATEWAY_IP_ADDRESS = _IP_ADDRESS_FORMAT % 1
 BOOTSERVER_IP_ADDRESS = _IP_ADDRESS_FORMAT % 1
 NETMASK = '255.255.255.0'
 LAST_INDEX = 200
+
+
+def setGatewayIP(ip):
+    global GATEWAY_IP_ADDRESS
+    GATEWAY_IP_ADDRESS = ip
 
 
 def ipAddressFromHostIndex(index):
@@ -23,10 +27,6 @@ def sshPortFromHostIndex(index):
 
 
 def setUpStaticPortForwardingForSSH(publicInterface):
-####
-    logging.warning("Skipping firewall setup")
-    return
-####
     deviceName = _findPublicInterface(publicInterface)
     for index in xrange(LAST_INDEX + 1):
         subprocess.call([
