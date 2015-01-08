@@ -26,12 +26,15 @@ class DynamicConfig:
         with open(config.RACK_YAML) as f:
             return yaml.load(f.read())
 
+    def _hostExists(self, hostData):
+        return hostData['id'] in self._offlineHosts or hostData['id'] in self._onlineHosts
+
     def _reload(self):
         logging.info("Reloading configuration")
         rack = self._loadRackYAML()
         with globallock.lock():
             for hostData in rack['HOSTS']:
-                if hostData['id'] in self._offlineHosts or hostData['id'] in self._onlineHosts:
+                if self._hostExists(hostData):
                     if hostData['id'] in self._onlineHosts and hostData.get('offline', False):
                         logging.info("Host %(host)s has been taken offline", dict(host=hostData['id']))
                         hostInstance = self._onlineHosts[hostData['id']]
