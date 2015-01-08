@@ -71,15 +71,16 @@ class DynamicConfig:
             logging.info('Host %(host)s added in offline state', dict(host=hostInstance.id()))
         else:
             self._onlineHosts[hostData['id']] = hostInstance
-            self._startUsingHost(hostInstance)
+            self._startUsingHost(hostInstance, True)
             logging.info('Host %(host)s added in online state', dict(host=hostInstance.id()))
 
-    def _startUsingHost(self, hostInstance):
+    def _startUsingHost(self, hostInstance, clearDisk=False):
         stateMachine = hoststatemachine.HostStateMachine(
             hostImplementation=hostInstance,
             inaugurate=self._inaugurate,
             tftpboot=self._tftpboot,
-            freshVMJustStarted=False)
+            freshVMJustStarted=False,
+            clearDisk=clearDisk)
         self._hosts.add(stateMachine)
         self._freePool.put(stateMachine)
 
