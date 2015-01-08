@@ -6,6 +6,7 @@ _IP_ADDRESS_FORMAT = "192.168.1.%d"
 GATEWAY_IP_ADDRESS = _IP_ADDRESS_FORMAT % 1
 BOOTSERVER_IP_ADDRESS = _IP_ADDRESS_FORMAT % 1
 NETMASK = '255.255.255.0'
+_NETWORK_PREFIX = "192.168.1."
 LAST_INDEX = 200
 
 
@@ -45,7 +46,9 @@ def setUpStaticPortForwardingForSSH(publicInterface):
         "iptables", "-t", "nat", "-A", "POSTROUTING", "-o", deviceName, "-j", 'MASQUERADE'])
 
 
-def translateSSHCredentials(index, credentials, publicNATIP):
+def translateSSHCredentials(index, credentials, publicNATIP, peer):
+    if peer[0].startswith(_NETWORK_PREFIX):
+        return credentials
     assert ipAddressFromHostIndex(index) == credentials['hostname']
     return dict(credentials, hostname=publicNATIP, port=sshPortFromHostIndex(index))
 

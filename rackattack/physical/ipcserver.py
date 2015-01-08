@@ -12,11 +12,11 @@ class IPCServer(baseipcserver.BaseIPCServer):
         self._hosts = hosts
         baseipcserver.BaseIPCServer.__init__(self)
 
-    def cmd_allocate(self, requirements, allocationInfo):
+    def cmd_allocate(self, requirements, allocationInfo, peer):
         allocation = self._allocations.create(requirements, allocationInfo)
         return allocation.index()
 
-    def cmd_allocation__nodes(self, id):
+    def cmd_allocation__nodes(self, id, peer):
         allocation = self._allocations.byIndex(id)
         if allocation.dead():
             raise Exception("Must not fetch nodes from a dead allocation")
@@ -36,19 +36,19 @@ class IPCServer(baseipcserver.BaseIPCServer):
                 osmosisServerIP=self._osmosisServerIP)
         return result
 
-    def cmd_allocation__free(self, id):
+    def cmd_allocation__free(self, id, peer):
         allocation = self._allocations.byIndex(id)
         allocation.free()
 
-    def cmd_allocation__done(self, id):
+    def cmd_allocation__done(self, id, peer):
         allocation = self._allocations.byIndex(id)
         return allocation.done()
 
-    def cmd_allocation__dead(self, id):
+    def cmd_allocation__dead(self, id, peer):
         allocation = self._allocations.byIndex(id)
         return allocation.dead()
 
-    def cmd_heartbeat(self, ids):
+    def cmd_heartbeat(self, ids, peer):
         for id in ids:
             allocation = self._allocations.byIndex(id)
             allocation.heartbeat()
@@ -61,18 +61,21 @@ class IPCServer(baseipcserver.BaseIPCServer):
                 return stateMachine
         raise Exception("Node with id '%s' was not found in this allocation" % nodeID)
 
-    def cmd_node__rootSSHCredentials(self, allocationID, nodeID):
+    def cmd_node__rootSSHCredentials(self, allocationID, nodeID, peer):
         stateMachine = self._findNode(allocationID, nodeID)
         credentials = stateMachine.hostImplementation().rootSSHCredentials()
         return network.translateSSHCredentials(
-            stateMachine.hostImplementation().index(), credentials, self._publicNATIP)
+            index=stateMachine.hostImplementation().index(),
+            credentials=credentials,
+            publicNATIP=self._publicNATIP,
+            peer=peer)
 
-    def cmd_node__coldRestart(self, allocationID, nodeID):
+    def cmd_node__coldRestart(self, allocationID, nodeID, peer):
         stateMachine = self._findNode(allocationID, nodeID)
         logging.info("Cold restarting node %(node)s by allocator request", dict(node=nodeID))
         stateMachine.hostImplementation().coldRestart()
 
-    def cmd_admin__queryStatus(self):
+    def cmd_admin__queryStatus(self, peer):
         allocations = [dict(
             index=a.index(),
             allocationInfo=a.allocationInfo(),
