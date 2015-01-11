@@ -25,18 +25,30 @@ class IPMI:
         self._powerCommand("off")
         self._powerCommand("on")
 
-    def _powerCommand(self, command):
-        NUMBER_OF_RETRIES = 10
-        cmdLine = [
-            "ipmitool", "power", command,
-            "-H", str(self._hostname), "-U", self._username, "-P", self._password]
-        for i in xrange(NUMBER_OF_RETRIES - 1):
+    def _excuteIPMITool(self, cmdArray, retryCount=10):
+        cmdLine = ['ipmitool', '-H', str(self._hostname), "-U", self._username,
+                   "-P", self._password] + cmdArray
+        tryNumber = 0
+        while True:
             try:
                 return subprocess.check_output(cmdLine, stderr=subprocess.STDOUT, close_fds=True)
-            except:
+            except subprocess.CalledProcessError as e:
+                if tryNumber >= retryCount:
+                    logging.error("Output: %(output)s", dict(output=e.output))
+                    raise
+                tryNumber += 1
                 time.sleep(0.1)
-        try:
-            return subprocess.check_output(cmdLine, stderr=subprocess.STDOUT, close_fds=True)
-        except subprocess.CalledProcessError as e:
-            logging.error("Output: %(output)s", dict(output=e.output))
-            raise
+
+    def forceBootFrom(self, boot, persistent=False):
+        ALLOWED_BOOT_OPTIONS = ['disk', 'pxe', 'bios']
+        if boot not in ALLOWED_BOOT_OPTIONS:
+            raise Exception("Boot option %s is not allowed" % boot)
+
+        bootenvCommand = ['chassis', 'bootdev', boot]
+        if persistent:
+            bootenvCommand = bootenvCommand + ['options=persistent']
+
+        self._excuteIPMITool(bootenvCommand, retryCount=1)
+
+    def _powerCommand(self, command):
+        self._excuteIPMITool(['power', command], retryCount=10)
