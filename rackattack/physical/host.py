@@ -41,6 +41,10 @@ class Host:
         if self._sol is None:
             self._sol = serialoverlan.SerialOverLan(hostID=self._id, **self._ipmiLogin)
 
+    def reconfigureBIOS(self):
+        logging.info("Reconviguring BIOS with PXE BOOT %(id)s", dict(id=self._id))
+        self._ipmi.forceBootFrom('pxe')
+
     def turnOff(self):
         logging.info("Turning off host %(id)s", dict(id=self._id))
         self._ipmi.off()
