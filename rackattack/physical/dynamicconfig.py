@@ -26,34 +26,52 @@ class DynamicConfig:
         with open(config.RACK_YAML) as f:
             return yaml.load(f.read())
 
+    def _takenOffline(self, hostData):
+        return hostData['id'] in self._onlineHosts and hostData.get('offline', False)
+
+    def _takeHostOffline(self, hostData):
+        hostInstance = self._onlineHosts[hostData['id']]
+        assert hostInstance.id() == hostData['id']
+        del self._onlineHosts[hostInstance.id()]
+        self._offlineHosts[hostInstance.id()] = hostInstance
+        hostInstance.turnOff()
+        stateMachine = self._findStateMachine(hostInstance)
+        if stateMachine is not None:
+            for allocation in self._allocations.all():
+                if stateMachine in allocation.allocated().values():
+                    allocation.withdraw("node taken offline")
+            assert stateMachine in self._freePool.all()
+            self._freePool.takeOut(stateMachine)
+            self._hosts.destroy(stateMachine)
+
+    def _broughtOnLineHost(self, hostData):
+        return hostData['id'] in self._offlineHosts and not hostData.get('offline', False)
+
+    def _bringHostOnline(self, hostData):
+        hostInstance = self._offlineHosts[hostData['id']]
+        assert hostInstance.id() == hostData['id']
+        del self._offlineHosts[hostInstance.id()]
+        self._onlineHosts[hostInstance.id()] = hostInstance
+        self._startUsingHost(hostInstance)
+
+    def _registeredHost(self, hostData):
+        return hostData['id'] in self._offlineHosts or hostData['id'] in self._onlineHosts
+
+    def _registeredHostConfiguration(self, hostData):
+        if self._takenOffline(hostData):
+            logging.info("Host %(host)s has been taken offline", dict(host=hostData['id']))
+            self._takeHostOffline(hostData)
+        elif self._broughtOnLineHost(hostData):
+            logging.info("Host %(host)s has been taken back online", dict(host=hostData['id']))
+            self._bringHostOnline(hostData)
+
     def _reload(self):
         logging.info("Reloading configuration")
         rack = self._loadRackYAML()
         with globallock.lock():
             for hostData in rack['HOSTS']:
-                if hostData['id'] in self._offlineHosts or hostData['id'] in self._onlineHosts:
-                    if hostData['id'] in self._onlineHosts and hostData.get('offline', False):
-                        logging.info("Host %(host)s has been taken offline", dict(host=hostData['id']))
-                        hostInstance = self._onlineHosts[hostData['id']]
-                        assert hostInstance.id() == hostData['id']
-                        del self._onlineHosts[hostInstance.id()]
-                        self._offlineHosts[hostInstance.id()] = hostInstance
-                        hostInstance.turnOff()
-                        stateMachine = self._findStateMachine(hostInstance)
-                        if stateMachine is not None:
-                            for allocation in self._allocations.all():
-                                if stateMachine in allocation.allocated().values():
-                                    allocation.withdraw("node taken offline")
-                            assert stateMachine in self._freePool.all()
-                            self._freePool.takeOut(stateMachine)
-                            self._hosts.destroy(stateMachine)
-                    elif hostData['id'] in self._offlineHosts and not hostData.get('offline', False):
-                        logging.info("Host %(host)s has been taken back online", dict(host=hostData['id']))
-                        hostInstance = self._offlineHosts[hostData['id']]
-                        assert hostInstance.id() == hostData['id']
-                        del self._offlineHosts[hostInstance.id()]
-                        self._onlineHosts[hostInstance.id()] = hostInstance
-                        self._startUsingHost(hostInstance)
+                if self._registeredHost(hostData):
+                    self._registeredHostConfiguration(hostData)
                 else:
                     self._newHostInConfiguration(hostData)
 
