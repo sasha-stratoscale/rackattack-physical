@@ -34,6 +34,7 @@ class DynamicConfig:
         assert hostInstance.id() == hostData['id']
         del self._onlineHosts[hostInstance.id()]
         self._offlineHosts[hostInstance.id()] = hostInstance
+        self._dnsmasq.remove(hostData['primaryMAC'])
         hostInstance.turnOff()
         stateMachine = self._findStateMachine(hostInstance)
         if stateMachine is not None:
@@ -52,6 +53,7 @@ class DynamicConfig:
         assert hostInstance.id() == hostData['id']
         del self._offlineHosts[hostInstance.id()]
         self._onlineHosts[hostInstance.id()] = hostInstance
+        self._dnsmasq.add(hostData['primaryMAC'], hostInstance.ipAddress())
         self._startUsingHost(hostInstance)
 
     def _registeredHost(self, hostData):
@@ -82,12 +84,12 @@ class DynamicConfig:
         hostInstance = host.Host(index=self._availableIndex(), **chewed)
         logging.info("Adding host %(id)s - %(ip)s", dict(
             id=hostInstance.id(), ip=hostInstance.ipAddress()))
-        self._dnsmasq.add(hostData['primaryMAC'], hostInstance.ipAddress())
         if hostData.get('offline', False):
             self._offlineHosts[hostData['id']] = hostInstance
             hostInstance.turnOff()
             logging.info('Host %(host)s added in offline state', dict(host=hostInstance.id()))
         else:
+            self._dnsmasq.add(hostData['primaryMAC'], hostInstance.ipAddress())
             self._onlineHosts[hostData['id']] = hostInstance
             self._startUsingHost(hostInstance)
             logging.info('Host %(host)s added in online state', dict(host=hostInstance.id()))
