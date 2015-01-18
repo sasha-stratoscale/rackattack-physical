@@ -4,10 +4,10 @@ clean:
 	sudo rm -fr build
 
 UNITTESTS=$(shell find rackattack -name 'test_*.py' | sed 's@/@.@g' | sed 's/\(.*\)\.py/\1/' | sort)
-COVERED_FILES=rackattack/physical/alloc/priority.py
+COVERED_FILES=rackattack/physical/alloc/priority.py,rackattack/physical/dynamicconfig.py
 unittest:
-	UPSETO_JOIN_PYTHON_NAMESPACES=Yes PYTHONPATH=. coverage run -m unittest $(UNITTESTS)
-	coverage report --show-missing --rcfile=coverage.config --fail-under=100 --include=$(COVERED_FILES)
+	UPSETO_JOIN_PYTHON_NAMESPACES=Yes PYTHONPATH=. python -m coverage run -m unittest $(UNITTESTS)
+	python -m coverage report --show-missing --rcfile=coverage.config --fail-under=86 --include=$(COVERED_FILES)
 
 check_convention:
 	pep8 rackattack --max-line-length=109
