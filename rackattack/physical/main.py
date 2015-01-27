@@ -63,8 +63,7 @@ dnsmasqInstance = dnsmasq.DNSMasq(
     tftpboot=tftpbootInstance,
     serverIP=network.BOOTSERVER_IP_ADDRESS,
     netmask=network.NETMASK,
-    firstIP=network.FIRST_IP,
-    lastIP=network.LAST_IP,
+    ipAddress=network.FIRST_IP,
     gateway=network.GATEWAY_IP_ADDRESS,
     nameserver=network.BOOTSERVER_IP_ADDRESS)
 inaugurateInstance = inaugurate.Inaugurate(bindHostname=network.BOOTSERVER_IP_ADDRESS)
